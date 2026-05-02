@@ -1,0 +1,276 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model Campaign {
+  id               String         @id @default(cuid())
+  name             String
+  businessType     String
+  osmCategoryKey   String
+  locationQuery    String
+  latitude         Float?
+  longitude        Float?
+  radiusMeters     Int            @default(5000)
+  maxLeads         Int            @default(50)
+  serviceOffer     String?
+  senderName       String?
+  senderCompany    String?
+  senderService    String?
+  status           CampaignStatus @default(DRAFT)
+  collectionStatus String         @default("pending")
+  enrichmentStatus String         @default("pending")
+  totalLeads       Int            @default(0)
+  enrichedLeads    Int            @default(0)
+  leadsWithEmail   Int            @default(0)
+  highScoreLeads   Int            @default(0)
+  lastError        String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  leads Lead[]
+  jobs  Job[]
+
+  @@index([status])
+  @@index([osmCategoryKey])
+  @@index([createdAt])
+}
+
+model GeocodeCache {
+  id          String   @id @default(cuid())
+  query       String   @unique
+  latitude    Float
+  longitude   Float
+  displayName String?
+  rawJson     Json?
+  createdAt   DateTime @default(now())
+}
+
+model Lead {
+  id                 String           @id @default(cuid())
+  campaignId         String
+  campaign           Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  source             LeadSource       @default(OPENSTREETMAP)
+  sourceId           String?
+  sourceType         String?
+  companyName        String?
+  category           String?
+  address            String?
+  latitude           Float?
+  longitude          Float?
+  phone              String?
+  website            String?
+  normalizedDomain   String?
+  email              String?
+  socialUrl          String?
+  facebookUrl        String?
+  instagramUrl       String?
+  linkedinUrl        String?
+  youtubeUrl         String?
+  twitterUrl         String?
+  contactPageUrl     String?
+  emailStatus        EmailStatus      @default(UNKNOWN)
+  websiteStatus      WebsiteStatus    @default(PENDING)
+  enrichmentStatus   EnrichmentStatus @default(PENDING)
+  outreachStatus     OutreachStatus   @default(NOT_STARTED)
+  leadScore          Int              @default(0)
+  opportunitySummary String?
+  issuesJson         Json?
+  tagsJson           Json?
+  rawOsmTags         Json?
+  notes              String?
+  lastError          String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  audits          WebsiteAudit[]
+  extractedEmails ExtractedEmail[]
+  outreachDrafts  OutreachDraft[]
+  jobs            Job[]
+
+  @@unique([campaignId, sourceId])
+  @@index([campaignId])
+  @@index([campaignId, leadScore])
+  @@index([campaignId, outreachStatus])
+  @@index([email])
+  @@index([normalizedDomain])
+  @@index([sourceId])
+  @@index([leadScore])
+  @@index([enrichmentStatus])
+}
+
+model WebsiteAudit {
+  id              String   @id @default(cuid())
+  leadId          String
+  lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  url             String
+  httpStatus      Int?
+  hasHttps        Boolean  @default(false)
+  title           String?
+  metaDescription String?
+  h1              String?
+  hasContactForm  Boolean  @default(false)
+  hasEmail        Boolean  @default(false)
+  hasPhone        Boolean  @default(false)
+  hasFacebook     Boolean  @default(false)
+  hasInstagram    Boolean  @default(false)
+  hasLinkedin     Boolean  @default(false)
+  hasSchema       Boolean  @default(false)
+  hasViewportMeta Boolean  @default(false)
+  loadTimeMs      Int?
+  pagesCrawled    Int      @default(0)
+  issuesJson      Json?
+  createdAt       DateTime @default(now())
+
+  @@index([leadId])
+}
+
+model ExtractedEmail {
+  id        String      @id @default(cuid())
+  leadId    String
+  lead      Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  email     String
+  sourceUrl String?
+  domain    String
+  localPart String?
+  emailType String?
+  hasMx     Boolean?
+  status    EmailStatus @default(UNKNOWN)
+  createdAt DateTime    @default(now())
+
+  @@unique([leadId, email])
+  @@index([leadId])
+  @@index([email])
+  @@index([domain])
+}
+
+model OutreachDraft {
+  id          String   @id @default(cuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  subject     String
+  body        String
+  templateKey String
+  status      String   @default("draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([leadId])
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  type        JobType
+  status      JobStatus @default(PENDING)
+  campaignId  String?
+  campaign    Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leadId      String?
+  lead        Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  payload     Json?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  lastError   String?
+  lockedAt    DateTime?
+  lockedBy    String?
+  availableAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([status, availableAt])
+  @@index([type])
+  @@index([availableAt])
+  @@index([campaignId])
+  @@index([leadId])
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model RateLimit {
+  key          String    @id
+  count        Int       @default(0)
+  value        String?
+  resetAt      DateTime?
+  blockedUntil DateTime?
+  updatedAt    DateTime  @updatedAt
+}
+
+enum CampaignStatus {
+  DRAFT
+  READY
+  COLLECTING
+  COLLECTED
+  ENRICHING
+  COMPLETED
+  FAILED
+}
+
+enum LeadSource {
+  OPENSTREETMAP
+  MANUAL
+  IMPORTED
+}
+
+enum EmailStatus {
+  UNKNOWN
+  INVALID_FORMAT
+  VALID_FORMAT
+  DOMAIN_FOUND
+  MX_FOUND
+  NO_MX
+  DISPOSABLE
+  RISKY
+}
+
+enum WebsiteStatus {
+  PENDING
+  CRAWLED
+  FAILED
+  NO_WEBSITE
+  BLOCKED_BY_ROBOTS
+  REDIRECTED_AWAY
+  TIMEOUT
+}
+
+enum EnrichmentStatus {
+  PENDING
+  PROCESSING
+  FINISHED
+  FAILED
+  SKIPPED
+}
+
+enum OutreachStatus {
+  NOT_STARTED
+  DRAFT_CREATED
+  APPROVED
+  EXPORTED
+  CONTACTED
+  REPLIED
+  NOT_INTERESTED
+}
+
+enum JobType {
+  GEOCODE_CAMPAIGN
+  COLLECT_OSM_LEADS
+  ENRICH_LEAD_WEBSITE
+  SCORE_LEAD
+  GENERATE_OUTREACH_DRAFT
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}

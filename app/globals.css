@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --primary: 170 76% 28%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 214 32% 91%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 37 92% 56%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 170 76% 28%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 222 47% 8%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+  --primary: 168 76% 42%;
+  --primary-foreground: 222 47% 8%;
+  --secondary: 217 33% 18%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 18%;
+  --muted-foreground: 215 20% 72%;
+  --accent: 38 92% 58%;
+  --accent-foreground: 222 47% 8%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 217 33% 22%;
+  --input: 217 33% 22%;
+  --ring: 168 76% 42%;
+}
+
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+}
+
+a {
+  @apply underline-offset-4;
+}
+
+button,
+input,
+select,
+textarea {
+  letter-spacing: 0;
+}
