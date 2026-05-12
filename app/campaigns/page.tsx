@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DeleteButton } from "@/components/ui/delete-button";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -47,7 +48,7 @@ export default async function CampaignsPage() {
                     <TableHead>Leads</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>High score</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -64,10 +65,17 @@ export default async function CampaignsPage() {
                       <TableCell>{campaign.totalLeads}</TableCell>
                       <TableCell>{campaign.leadsWithEmail}</TableCell>
                       <TableCell>{campaign.highScoreLeads}</TableCell>
-                      <TableCell>
-                        <Link href={`/campaigns/${campaign.id}`} className="font-medium text-primary hover:underline">
-                          Open
-                        </Link>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/campaigns/${campaign.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                            Open
+                          </Link>
+                          <DeleteButton
+                            endpoint={`/api/campaigns/${campaign.id}`}
+                            redirectTo="/campaigns"
+                            label="Delete"
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -77,7 +85,16 @@ export default async function CampaignsPage() {
           </CardContent>
         </Card>
       ) : (
-        <EmptyState title="No campaigns yet" description="Create a campaign to geocode a location and collect nearby public business listings." />
+        <EmptyState
+          title="No campaigns yet"
+          description="Create your first campaign to start finding business leads in any location."
+          action={
+            <Link href="/campaigns/new" className={buttonVariants()}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create campaign
+            </Link>
+          }
+        />
       )}
     </div>
   );

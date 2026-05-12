@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { EmailStatus, EnrichmentStatus, Prisma } from "@prisma/client";
 import { EmptyState } from "@/components/ui/empty-state";
 import { buttonVariants } from "@/components/ui/button";
@@ -50,6 +52,18 @@ export default async function LeadsPage({
         <EmptyState
           title={totalAll === 0 ? "No leads collected yet" : "No leads match these filters"}
           description={totalAll === 0 ? "Open a campaign and collect leads to populate this table." : "Loosen filters or clear them to see available leads."}
+          action={
+            totalAll === 0 ? (
+              <Link href="/campaigns/new" className={buttonVariants()}>
+                <Plus className="mr-2 h-4 w-4" />
+                Start a campaign
+              </Link>
+            ) : (
+              <Link href="/leads" className={buttonVariants({ variant: "outline" })}>
+                Clear all filters
+              </Link>
+            )
+          }
         />
       )}
     </div>

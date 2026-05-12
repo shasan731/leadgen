@@ -12,6 +12,31 @@ export function CampaignStatusCard({ campaignId, defaultBatchSize = 5 }: { campa
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [showManual, setShowManual] = useState(false);
+
+  async function processEverything() {
+    setBusy("Everything");
+    setMessage(null);
+    try {
+      // First ensure collection jobs are there if needed
+      await fetch(`/api/campaigns/${campaignId}/collect`, { method: "POST" });
+
+      // Process a mix of all job types
+      const result = await process([
+        "GEOCODE_CAMPAIGN",
+        "COLLECT_OSM_LEADS",
+        "ENRICH_LEAD_WEBSITE",
+        "SCORE_LEAD",
+        "GENERATE_OUTREACH_DRAFT"
+      ], defaultBatchSize * 2);
+
+      setMessage(`Batch processed ${result.processed} job(s). ${result.remaining} ready job(s) remain.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Processing failed.");
+    }
+    setBusy(null);
+    router.refresh();
+  }
 
   async function collect() {
     setBusy("collect");
@@ -58,21 +83,58 @@ export function CampaignStatusCard({ campaignId, defaultBatchSize = 5 }: { campa
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Manual processing</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Campaign actions</CardTitle>
+        <Button variant="ghost" size="sm" onClick={() => setShowManual(!showManual)}>
+          {showManual ? "Hide manual tools" : "Show manual tools"}
+        </Button>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-          <ActionButton busy={busy === "collect"} onClick={collect} icon={Search} label="Collect leads" />
-          <ActionButton busy={busy === "Enrichment"} onClick={() => run("Enrichment", ["ENRICH_LEAD_WEBSITE"], defaultBatchSize)} icon={Play} label="Process enrichment" />
-          <ActionButton busy={busy === "Scoring"} onClick={() => run("Scoring", ["SCORE_LEAD"], 10)} icon={Gauge} label="Score leads" />
-          <ActionButton busy={busy === "Drafts"} onClick={() => run("Drafts", ["GENERATE_OUTREACH_DRAFT"], 10)} icon={FileText} label="Generate drafts" />
-          <Button variant="outline" type="button" onClick={() => window.location.assign(`/api/exports/csv?campaignId=${campaignId}`)}>
-            <Download className="h-4 w-4" aria-hidden />
-            Export CSV
+      <CardContent className="space-y-6">
+        <div className="flex flex-wrap gap-3">
+          <Button
+            className="h-12 px-8"
+            disabled={Boolean(busy)}
+            onClick={processEverything}
+          >
+            {busy === "Everything" ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <Play className="mr-2 h-5 w-5" />
+            )}
+            Process next batch
+          </Button>
+
+          <Button
+            variant="outline"
+            className="h-12 px-8"
+            onClick={() => window.location.assign(`/api/exports/csv?campaignId=${campaignId}`)}
+          >
+            <Download className="mr-2 h-5 w-5" />
+            Download CSV
           </Button>
         </div>
-        {message ? <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground" aria-live="polite">{message}</p> : null}
+
+        {showManual && (
+          <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Manual override tools</p>
+            <div className="flex flex-wrap gap-2">
+              <ActionButton busy={busy === "collect"} onClick={collect} icon={Search} label="Collect leads" />
+              <ActionButton busy={busy === "Enrichment"} onClick={() => run("Enrichment", ["ENRICH_LEAD_WEBSITE"], defaultBatchSize)} icon={Play} label="Process enrichment" />
+              <ActionButton busy={busy === "Scoring"} onClick={() => run("Scoring", ["SCORE_LEAD"], 10)} icon={Gauge} label="Score leads" />
+              <ActionButton busy={busy === "Drafts"} onClick={() => run("Drafts", ["GENERATE_OUTREACH_DRAFT"], 10)} icon={FileText} label="Generate drafts" />
+            </div>
+          </div>
+        )}
+
+        {message ? (
+          <p className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-800 border border-blue-100" aria-live="polite">
+            {message}
+          </p>
+        ) : null}
+
+        <p className="text-xs text-muted-foreground">
+          Click <strong>Process next batch</strong> to automatically collect, enrich, score, and draft leads in this campaign.
+        </p>
       </CardContent>
     </Card>
   );

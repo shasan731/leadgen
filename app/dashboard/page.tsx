@@ -27,20 +27,21 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Small-batch public lead collection and enrichment.</p>
+          <h1 className="text-2xl font-semibold">Lead Scout Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Find local business leads from public data sources.</p>
         </div>
         <Link href="/campaigns/new" className={buttonVariants()}>
-          <Plus className="h-4 w-4" aria-hidden />
-          Create campaign
+          <Plus className="mr-2 h-5 w-5" />
+          Start a new search
         </Link>
       </div>
 
       <StatsCards stats={{ totalCampaigns, totalLeads, leadsWithEmail, highScoreLeads, pendingJobs, failedJobs }} />
 
       <Card>
-        <CardHeader>
-          <CardTitle>Recent campaigns</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Active campaigns</CardTitle>
+          <Link href="/campaigns" className="text-sm text-primary hover:underline">View all</Link>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
