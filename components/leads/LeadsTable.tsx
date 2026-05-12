@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SafeLink } from "@/components/ui/safe-link";
 import { CopyButton } from "@/components/ui/copy-button";
+import { DeleteButton } from "@/components/ui/delete-button";
+import { buttonVariants } from "@/components/ui/button";
 import { LeadScoreBadge } from "./LeadScoreBadge";
 
 type LeadWithCampaign = Lead & {
@@ -28,7 +30,7 @@ export function LeadsTable({ leads }: { leads: LeadWithCampaign[] }) {
             <TableHead>Email status</TableHead>
             <TableHead>Issues</TableHead>
             <TableHead>Outreach</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -60,10 +62,17 @@ export function LeadsTable({ leads }: { leads: LeadWithCampaign[] }) {
               </TableCell>
               <TableCell>{Array.isArray(lead.issuesJson) ? lead.issuesJson.length : 0}</TableCell>
               <TableCell>{lead.outreachStatus}</TableCell>
-              <TableCell>
-                <Link href={`/leads/${lead.id}`} className="font-medium text-primary hover:underline">
-                  Open
-                </Link>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Link href={`/leads/${lead.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                    Open
+                  </Link>
+                  <DeleteButton
+                    endpoint={`/api/leads/${lead.id}`}
+                    redirectTo="/leads"
+                    label="Delete"
+                  />
+                </div>
               </TableCell>
             </TableRow>
           ))}

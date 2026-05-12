@@ -19,7 +19,9 @@ const settingsSchema = z.object({
 export async function GET() {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
-  return NextResponse.json({ settings: await getEditableSettings() });
+  const settings = await getEditableSettings();
+  const filtered = Object.fromEntries(Object.entries(settings).filter(([key]) => !key.startsWith("rate_limit:")));
+  return NextResponse.json({ settings: filtered });
 }
 
 export async function POST(request: NextRequest) {
